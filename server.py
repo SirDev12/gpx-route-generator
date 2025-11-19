@@ -12,7 +12,7 @@ from io import BytesIO
 import math
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend access
+CORS(app)
 
 
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -20,7 +20,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     Calculate distance between two coordinates using Haversine formula
     Returns distance in meters
     """
-    R = 6371000  # Earth radius in meters
+    R = 6371000
     
     lat1_rad = math.radians(lat1)
     lat2_rad = math.radians(lat2)
@@ -80,8 +80,6 @@ def generate_gpx():
     """
     try:
         data = request.json
-        
-        # Validate input
         if not data or 'points' not in data:
             return jsonify({'error': 'No points provided'}), 400
         
@@ -92,71 +90,43 @@ def generate_gpx():
         
         if len(points) < 2:
             return jsonify({'error': 'At least 2 points required'}), 400
-        
-        # Create GPX object
         gpx = gpxpy.gpx.GPX()
         gpx.creator = "GPX Route Generator - Bandung Edition"
-        
-        # Create track
         gpx_track = gpxpy.gpx.GPXTrack()
         gpx_track.name = f"{activity_type} Activity"
         gpx_track.type = activity_type
         gpx.tracks.append(gpx_track)
-        
-        # Process laps
         for lap in range(laps):
-            # Create segment for this lap
             gpx_segment = gpxpy.gpx.GPXTrackSegment()
             gpx_track.segments.append(gpx_segment)
-            
-            # Use original points for first lap, or close the loop for subsequent laps
             lap_points = points.copy()
             if lap > 0 or laps > 1:
-                # Close the loop by adding first point at the end
                 if lap_points[0] != lap_points[-1]:
                     lap_points.append(lap_points[0])
-            
-            # Interpolate points for smooth tracking
             interpolated_points = interpolate_points(lap_points, target_interval=5)
-            
-            # Calculate total distance for time calculation
             total_distance = 0
             for i in range(1, len(interpolated_points)):
                 p1 = interpolated_points[i - 1]
                 p2 = interpolated_points[i]
                 total_distance += calculate_distance(p1['lat'], p1['lon'], p2['lat'], p2['lon'])
-            
-            # Calculate time per point based on pace
             pace_seconds_per_meter = (pace_minutes * 60) / 1000
             total_time_seconds = total_distance * pace_seconds_per_meter
             time_per_segment = total_time_seconds / max(1, len(interpolated_points) - 1)
-            
-            # Start time (offset by lap)
             start_time = datetime.now() + timedelta(seconds=lap * total_time_seconds)
             current_time = start_time
-            
-            # Add points to segment
             for i, point in enumerate(interpolated_points):
                 gpx_point = gpxpy.gpx.GPXTrackPoint(
                     latitude=point['lat'],
                     longitude=point['lon'],
-                    elevation=700,  # Default elevation for Bandung (~700m)
+                    elevation=700,
                     time=current_time
                 )
                 gpx_segment.points.append(gpx_point)
-                
-                # Increment time for next point
                 if i < len(interpolated_points) - 1:
                     current_time += timedelta(seconds=time_per_segment)
-        
-        # Convert GPX to XML string
         gpx_xml = gpx.to_xml()
-        
-        # Create BytesIO object to send file
         gpx_bytes = BytesIO(gpx_xml.encode('utf-8'))
         gpx_bytes.seek(0)
-        
-        # Generate filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'route_{activity_type.lower()}_{timestamp}.gpx'
         
