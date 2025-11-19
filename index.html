@@ -7,15 +7,9 @@
     <meta name="keywords" content="GPX, route generator, Strava, running, cycling, Bandung">
     <meta name="author" content="Your Name">
     <title>GPX Route Generator - Bandung Edition</title>
-    
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    
-    <!-- Leaflet GeoSearch CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css"/>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,8 +17,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-    <!-- Header -->
     <header class="header">
         <div class="logo-section">
             <div class="logo-icon">🗺️</div>
@@ -35,18 +27,11 @@
         </div>
         <button id="themeToggle" aria-label="Toggle theme">🌙 Dark Mode</button>
     </header>
-
-    <!-- Main Container -->
     <main class="container">
-        <!-- Map Section -->
         <section class="map-section">
             <div id="map"></div>
         </section>
-
-        <!-- Controls Sidebar -->
         <aside class="controls">
-            
-            <!-- Route Settings Card -->
             <div class="control-card">
                 <div class="card-header">
                     <div class="card-icon">⚙️</div>
@@ -81,8 +66,6 @@
                     <input type="number" id="laps" value="1" step="1" min="1" placeholder="Auto-close route">
                 </div>
             </div>
-
-            <!-- Actions Card -->
             <div class="control-card">
                 <div class="card-header">
                     <div class="card-icon">🎯</div>
@@ -107,8 +90,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Stats Card -->
             <div class="control-card">
                 <div class="card-header">
                     <div class="card-icon">📊</div>
@@ -136,8 +117,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Favorites Card -->
             <div class="control-card">
                 <div class="card-header">
                     <div class="card-icon">⭐</div>
@@ -152,11 +131,8 @@
                 </div>
 
                 <div id="favoritesList" class="favorites-list">
-                    <!-- Favorites will be dynamically loaded here -->
                 </div>
             </div>
-
-            <!-- Instructions Card -->
             <div class="instruction-card">
                 <div class="card-header">
                     <div class="card-icon">📖</div>
@@ -184,8 +160,6 @@
             </div>
         </aside>
     </main>
-
-    <!-- Save Route Modal -->
     <div id="saveModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
@@ -214,12 +188,8 @@
             </div>
         </div>
     </div>
-
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <!-- Leaflet GeoSearch JS -->
     <script src="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.umd.js"></script>
     
     <!-- Main Application Script -->
