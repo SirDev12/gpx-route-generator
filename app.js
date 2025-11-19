@@ -1,8 +1,3 @@
-// ================================
-// GPX Route Generator - Main Application
-// ================================
-
-// Global Variables
 let map;
 let routeMarkers = [];
 let routePoints = [];
@@ -10,31 +5,22 @@ let polyline;
 let lightTileLayer;
 let darkTileLayer;
 
-// ================================
-// Map Initialization
-// ================================
-
 function initMap() {
-    // Initialize map centered on Bandung
     map = L.map('map').setView([-6.9175, 107.6191], 13);
 
-    // Light mode tile layer
     lightTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors'
     });
 
-    // Dark mode tile layer
     darkTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors',
         className: 'tile-dark'
     });
 
-    // Add default light tile layer
     lightTileLayer.addTo(map);
 
-    // Add search functionality
     const provider = new window.GeoSearch.OpenStreetMapProvider();
     const searchControl = new window.GeoSearch.GeoSearchControl({
         provider: provider,
@@ -44,24 +30,19 @@ function initMap() {
         keepResult: true,
         searchLabel: 'Search locations in Bandung...'
     });
+
     map.addControl(searchControl);
 
-    // Map click event to add markers
     map.on('click', function(e) {
         addMarker(e.latlng);
     });
 }
-
-// ================================
-// Marker & Route Management
-// ================================
 
 function addMarker(latlng) {
     const marker = L.marker(latlng, { draggable: true });
     marker.addTo(map);
     routeMarkers.push(marker);
 
-    // Update on drag
     marker.on('dragend', function() {
         updateRouteAndStats();
     });
@@ -70,22 +51,18 @@ function addMarker(latlng) {
 }
 
 function updateRouteAndStats() {
-    // Update routePoints from markers
     routePoints = routeMarkers.map(m => {
         const ll = m.getLatLng();
         return { lat: ll.lat, lon: ll.lng };
     });
 
-    // Remove old polyline
     if (polyline) map.removeLayer(polyline);
 
-    // Draw new polyline
     if (routePoints.length > 1) {
         const latlngs = routePoints.map(p => [p.lat, p.lon]);
         polyline = L.polyline(latlngs, { color: '#FC4C02', weight: 4 }).addTo(map);
     }
 
-    // Update stats display
     document.getElementById('pointCount').innerText = routePoints.length;
     document.getElementById('distanceDisplay').innerText = calculateTotalDistance().toFixed(2);
 }
@@ -98,12 +75,11 @@ function calculateTotalDistance() {
             routePoints[i].lat, routePoints[i].lon
         );
     }
-    return distance / 1000; // Convert to km
+    return distance / 1000;
 }
 
-// Haversine formula for distance calculation
 function haversine(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Earth radius in meters
+    const R = 6371000;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -117,11 +93,6 @@ function toRad(deg) {
     return deg * (Math.PI / 180);
 }
 
-// ================================
-// Action Buttons
-// ================================
-
-// Undo button
 document.getElementById('undoBtn').addEventListener('click', () => {
     if (routeMarkers.length > 0) {
         const lastMarker = routeMarkers.pop();
@@ -133,7 +104,6 @@ document.getElementById('undoBtn').addEventListener('click', () => {
     }
 });
 
-// Reset button
 document.getElementById('resetBtn').addEventListener('click', () => {
     for (let marker of routeMarkers) {
         map.removeLayer(marker);
@@ -144,7 +114,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     updateStatusMessage('Route has been reset. Click on the map to create a new route.', 'info');
 });
 
-// Generate GPX button
 document.getElementById('generateBtn').addEventListener('click', async () => {
     if (routePoints.length < 2) {
         updateStatusMessage('Please create a route with at least 2 points.', 'error');
@@ -154,9 +123,9 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     const pace = document.getElementById('pace').value;
     const activity = document.getElementById('activity').value;
     const laps = document.getElementById('laps').value;
-    
+
     updateStatusMessage('Processing your route... Please wait.', 'processing');
-    
+
     try {
         const response = await fetch('http://127.0.0.1:5000/generate_gpx', {
             method: 'POST',
@@ -169,30 +138,26 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.statusText}`);
-        }
-        
+        if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
+
         a.style.display = 'none';
         a.href = url;
         a.download = `activity_${activity}_${laps}laps_${Date.now()}.gpx`;
+
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        
+
         updateStatusMessage('GPX file successfully created and downloaded!', 'success');
     } catch (error) {
         console.error('Error:', error);
         updateStatusMessage('Failed to create GPX file. Make sure the backend server is running.', 'error');
     }
 });
-
-// ================================
-// Status Message Helper
-// ================================
 
 function updateStatusMessage(message, type = 'info') {
     const statusEl = document.getElementById('statusMessage');
@@ -202,14 +167,10 @@ function updateStatusMessage(message, type = 'info') {
         'error': '❌',
         'processing': '⏳'
     };
-    
+
     statusEl.className = type === 'info' ? 'info-message' : `status-message ${type}`;
     statusEl.innerHTML = `<span class="info-icon">${iconMap[type] || iconMap.info}</span><span>${message}</span>`;
 }
-
-// ================================
-// Dark Mode Toggle
-// ================================
 
 const themeToggle = document.getElementById('themeToggle');
 
@@ -234,11 +195,6 @@ themeToggle.addEventListener('click', () => {
     setMode(currentMode === 'dark' ? 'light' : 'dark');
 });
 
-// ================================
-// Favorites Management
-// ================================
-
-// Load favorites from localStorage
 function loadFavorites() {
     const favorites = JSON.parse(localStorage.getItem('routeFavorites') || '[]');
     const favoritesList = document.getElementById('favoritesList');
@@ -285,7 +241,6 @@ function loadFavorites() {
         `;
     }).join('');
 
-    // Add click events to load routes
     document.querySelectorAll('.favorite-item').forEach(item => {
         item.addEventListener('click', function(e) {
             if (!e.target.classList.contains('favorite-delete')) {
@@ -296,7 +251,6 @@ function loadFavorites() {
     });
 }
 
-// Get activity icon
 function getActivityIcon(activity) {
     const icons = {
         'Run': '🏃',
@@ -306,7 +260,6 @@ function getActivityIcon(activity) {
     return icons[activity] || '🏃';
 }
 
-// Calculate route distance for display
 function calculateRouteDistance(points) {
     let distance = 0;
     for (let i = 1; i < points.length; i++) {
@@ -315,32 +268,27 @@ function calculateRouteDistance(points) {
     return (distance / 1000).toFixed(2);
 }
 
-// Load a favorite route onto the map
 function loadFavoriteRoute(index) {
     const favorites = JSON.parse(localStorage.getItem('routeFavorites') || '[]');
     const favorite = favorites[index];
     
     if (!favorite) return;
 
-    // Clear existing route
     for (let marker of routeMarkers) {
         map.removeLayer(marker);
     }
     routeMarkers = [];
 
-    // Load the favorite route points
     favorite.points.forEach(point => {
         addMarker(L.latLng(point.lat, point.lon));
     });
 
-    // Set the settings
     document.getElementById('pace').value = favorite.pace;
     document.getElementById('activity').value = favorite.activity;
     document.getElementById('laps').value = favorite.laps;
 
     updateRouteAndStats();
     
-    // Fit map to route bounds
     if (routeMarkers.length > 0) {
         const group = L.featureGroup(routeMarkers);
         map.fitBounds(group.getBounds().pad(0.1));
@@ -349,7 +297,6 @@ function loadFavoriteRoute(index) {
     updateStatusMessage(`Loaded route: ${favorite.name}`, 'success');
 }
 
-// Delete a favorite route
 window.deleteFavorite = function(event, index) {
     event.stopPropagation();
     
@@ -362,21 +309,18 @@ window.deleteFavorite = function(event, index) {
     }
 };
 
-// Save current route as favorite
 document.getElementById('saveRouteBtn').addEventListener('click', () => {
     if (routePoints.length < 2) {
         updateStatusMessage('Please create a route with at least 2 points before saving.', 'error');
         return;
     }
-    
-    // Show modal
+
     document.getElementById('saveModal').classList.add('show');
     document.getElementById('routeName').value = '';
     document.getElementById('routeDescription').value = '';
     document.getElementById('routeName').focus();
 });
 
-// Modal close handlers
 document.getElementById('closeModal').addEventListener('click', () => {
     document.getElementById('saveModal').classList.remove('show');
 });
@@ -385,14 +329,12 @@ document.getElementById('cancelSave').addEventListener('click', () => {
     document.getElementById('saveModal').classList.remove('show');
 });
 
-// Click outside modal to close
 document.getElementById('saveModal').addEventListener('click', (e) => {
     if (e.target.id === 'saveModal') {
         document.getElementById('saveModal').classList.remove('show');
     }
 });
 
-// Confirm save
 document.getElementById('confirmSave').addEventListener('click', () => {
     const name = document.getElementById('routeName').value.trim();
     const description = document.getElementById('routeDescription').value.trim();
@@ -403,7 +345,7 @@ document.getElementById('confirmSave').addEventListener('click', () => {
     }
 
     const favorites = JSON.parse(localStorage.getItem('routeFavorites') || '[]');
-    
+
     const newFavorite = {
         id: Date.now(),
         name: name,
@@ -423,22 +365,15 @@ document.getElementById('confirmSave').addEventListener('click', () => {
     updateStatusMessage(`Route "${name}" saved successfully!`, 'success');
 });
 
-// ================================
-// Initialization
-// ================================
-
-// Initialize map on page load
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
-    
-    // Load saved theme
+
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
         setMode(savedTheme);
     } else {
         setMode('light');
     }
-    
-    // Load favorites
+
     loadFavorites();
 });
