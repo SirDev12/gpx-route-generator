@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create and manage GPX routes for running, cycling, and walking in Bandung">
+    <meta name="keywords" content="GPX, route generator, Strava, running, cycling, Bandung">
+    <meta name="author" content="Your Name">
+    <title>GPX Route Generator - Bandung Edition</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Leaflet GeoSearch CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css"/>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo-icon">🗺️</div>
+            <div class="logo-text">
+                <h1>GPX Route Generator</h1>
+                <p>Bandung Edition - Create Your Perfect Route</p>
+            </div>
+        </div>
+        <button id="themeToggle" aria-label="Toggle theme">🌙 Dark Mode</button>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Map Section -->
+        <section class="map-section">
+            <div id="map"></div>
+        </section>
+
+        <!-- Controls Sidebar -->
+        <aside class="controls">
+            
+            <!-- Route Settings Card -->
+            <div class="control-card">
+                <div class="card-header">
+                    <div class="card-icon">⚙️</div>
+                    <h2 class="card-title">Route Settings</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pace">
+                        <span class="label-icon">⏱️</span>
+                        Pace (min/km)
+                    </label>
+                    <input type="number" id="pace" value="6" step="0.1" min="1" placeholder="Enter your pace">
+                </div>
+
+                <div class="form-group">
+                    <label for="activity">
+                        <span class="label-icon">🏃</span>
+                        Activity Type
+                    </label>
+                    <select id="activity">
+                        <option value="Run">🏃 Running</option>
+                        <option value="Ride">🚴 Cycling</option>
+                        <option value="Walk">🚶 Walking</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="laps">
+                        <span class="label-icon">🔄</span>
+                        Number of Laps
+                    </label>
+                    <input type="number" id="laps" value="1" step="1" min="1" placeholder="Auto-close route">
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            <div class="control-card">
+                <div class="card-header">
+                    <div class="card-icon">🎯</div>
+                    <h2 class="card-title">Actions</h2>
+                </div>
+
+                <div class="button-group full">
+                    <button id="generateBtn" class="btn-primary">
+                        <span>📥</span>
+                        Generate & Download GPX
+                    </button>
+                </div>
+
+                <div class="button-group split">
+                    <button id="undoBtn" class="btn-warning">
+                        <span>↶</span>
+                        Undo
+                    </button>
+                    <button id="resetBtn" class="btn-danger">
+                        <span>🔄</span>
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="control-card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <h2 class="card-title">Route Statistics</h2>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Points</div>
+                            <div class="stat-value" id="pointCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Distance</div>
+                            <div class="stat-value">
+                                <span id="distanceDisplay">0.00</span>
+                                <span class="stat-unit">km</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="statusMessage" class="info-message">
+                        <span class="info-icon">ℹ️</span>
+                        <span>Click on the map to start creating your route. Use the search bar to find locations.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Favorites Card -->
+            <div class="control-card">
+                <div class="card-header">
+                    <div class="card-icon">⭐</div>
+                    <h2 class="card-title">Favorite Routes</h2>
+                </div>
+
+                <div class="button-group full">
+                    <button id="saveRouteBtn" class="btn-success">
+                        <span>💾</span>
+                        Save Current Route
+                    </button>
+                </div>
+
+                <div id="favoritesList" class="favorites-list">
+                    <!-- Favorites will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Instructions Card -->
+            <div class="instruction-card">
+                <div class="card-header">
+                    <div class="card-icon">📖</div>
+                    <h2 class="card-title">How to Use</h2>
+                </div>
+                
+                <ol class="instruction-list">
+                    <li>
+                        <span class="instruction-number">1</span>
+                        <span>Click on the map to add route points</span>
+                    </li>
+                    <li>
+                        <span class="instruction-number">2</span>
+                        <span>Drag markers to adjust your route</span>
+                    </li>
+                    <li>
+                        <span class="instruction-number">3</span>
+                        <span>Set your pace and activity type</span>
+                    </li>
+                    <li>
+                        <span class="instruction-number">4</span>
+                        <span>Save as favorite or generate GPX file</span>
+                    </li>
+                </ol>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Save Route Modal -->
+    <div id="saveModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">💾 Save Favorite Route</h3>
+                <button class="close-modal" id="closeModal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="routeName">
+                        <span class="label-icon">📝</span>
+                        Route Name
+                    </label>
+                    <input type="text" id="routeName" placeholder="e.g., Morning Run at Dago" required>
+                </div>
+                <div class="form-group">
+                    <label for="routeDescription">
+                        <span class="label-icon">📄</span>
+                        Description (Optional)
+                    </label>
+                    <input type="text" id="routeDescription" placeholder="e.g., 5km loop with hills">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelSave" class="btn-cancel">Cancel</button>
+                <button id="confirmSave" class="btn-confirm">Save Route</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet GeoSearch JS -->
+    <script src="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.umd.js"></script>
+    
+    <!-- Main Application Script -->
+    <script src="app.js"></script>
+
+</body>
+</html>
